@@ -44,15 +44,20 @@ func main() {
 	router := mux.NewRouter().StrictSlash(false)
 
 	// Create routers
-	router.HandleFunc("/", homeDefault).Methods("GET")
-	router.HandleFunc("/ipcalc", ipCalc).Methods("GET")
-	router.HandleFunc("/info", returnHttpInfo).Methods("GET")
+	router.HandleFunc("/", getRemoteIp).Methods("GET")
+	router.HandleFunc("/info", getHttpInfo).Methods("GET")
+	router.HandleFunc("/ipcalc", getIpCalc).Methods("GET")
 
 	// Start HTTP server
 	log.Fatal(http.ListenAndServe(":"+http_port, router))
 }
 
-func returnHttpInfo(w http.ResponseWriter, r *http.Request) {
+func getRemoteIp(w http.ResponseWriter, r *http.Request) {
+	remoteAddr := strings.Split(r.RemoteAddr, ":")
+	fmt.Fprintf(w, remoteAddr[0])
+}
+
+func getHttpInfo(w http.ResponseWriter, r *http.Request) {
 	httpInfo := HttpInfo{}
 	w.Header().Set("Content-Type", "application/json")
 
@@ -64,12 +69,7 @@ func returnHttpInfo(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
-func homeDefault(w http.ResponseWriter, r *http.Request) {
-	remoteAddr := strings.Split(r.RemoteAddr, ":")
-	fmt.Fprintf(w, remoteAddr[0])
-}
-
-func ipCalc(w http.ResponseWriter, r *http.Request) {
+func getIpCalc(w http.ResponseWriter, r *http.Request) {
 	var ips []string
 	ipCalc := IpCalc{}
 	w.Header().Set("Content-Type", "application/json")
@@ -84,10 +84,10 @@ func ipCalc(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Get query parameters
 	for k, v := range r.Form {
 		val := strings.Join(v, "")
 		switch k {
-		// ADDRESS
 		case "ip":
 			// ParseIP returns nil if the IP is wrong
 			if ip := net.ParseIP(val); ip == nil {
@@ -96,7 +96,6 @@ func ipCalc(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 			ipCalc.Address = val
-		// CIDR
 		case "cidr":
 			valInt, _ := strconv.Atoi(val)
 			// Since inc function is really not optimal, avoid bigger calculation
