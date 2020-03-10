@@ -146,6 +146,7 @@ func getIpCalc(w http.ResponseWriter, r *http.Request) {
 		ipCalc.HostMax = ips[len(ips)-2]
 		ipCalc.Broadcast = ips[len(ips)-1]
 		ipCalc.NetworkCidr = ipNet.String()
+		ipCalc.Network = strings.Split(ipCalc.NetworkCidr, "/")[0]
 		ipCalc.HostsAvailable = strconv.Itoa(len(ips) - 2)
 	}
 
