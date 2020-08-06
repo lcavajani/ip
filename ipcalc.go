@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	"net"
-	"net/http"
+	"path"
 	"strconv"
 	"strings"
 )
@@ -30,7 +30,7 @@ func NewIpCalc() *IpCalc {
 }
 
 func (i *IpCalc) getNetworkInfo() error {
-	_, ipNet, err := net.ParseCIDR(i.Address + "/" + strconv.Itoa(i.Cidr))
+	_, ipNet, err := net.ParseCIDR(path.Join(i.Address, strconv.Itoa(i.Cidr)))
 	if err != nil {
 		return fmt.Errorf("something went wrong during cidr parsing: %v", err)
 	}
@@ -56,6 +56,7 @@ func (i *IpCalc) getNetworkInfo() error {
 		i.Broadcast = nextIP(ipNet.IP, uint(i.HostsTotal-1))
 		i.HostsAvailable = i.HostsTotal - 2
 	}
+
 	return nil
 }
 
@@ -70,50 +71,4 @@ func nextIP(ip net.IP, inc uint) string {
 	v0 := byte((v >> 24) & 0xFF)
 
 	return net.IPv4(v0, v1, v2, v3).String()
-}
-
-func getIpCalc(w http.ResponseWriter, r *http.Request) {
-	ipCalc := NewIpCalc()
-
-	// populate r.Form
-	r.ParseForm()
-
-	// ip and cidr must be provided
-	if len(r.Form) != 2 {
-		respondWithError(w, http.StatusBadRequest, fmt.Sprintf("wrong number of arguments: %v", len(r.Form)))
-		return
-	}
-
-	// Get query parameters
-	for k, v := range r.Form {
-		val := v[0]
-		switch k {
-		case "ip":
-			// ParseIP returns nil if the IP is wrong
-			if ip := net.ParseIP(val); ip == nil {
-				respondWithError(w, http.StatusBadRequest, fmt.Sprintf("invalid ip: %v", val))
-				return
-			}
-			ipCalc.Address = val
-		case "cidr":
-			valInt, _ := strconv.Atoi(val)
-			if net.CIDRMask(valInt, 32) == nil {
-				respondWithError(w, http.StatusBadRequest, fmt.Sprintf("invalid or too low (<8) cidr: %v", val))
-				return
-			}
-			ipCalc.Cidr = valInt
-		default:
-			respondWithError(w, http.StatusBadRequest, fmt.Sprintf("wrong argument provided: %v", k))
-			return
-		}
-	}
-
-	err := ipCalc.getNetworkInfo()
-	if err != nil {
-		respondWithError(w, http.StatusInternalServerError, err.Error())
-		return
-	}
-
-	respondWithJSON(w, http.StatusOK, ipCalc)
-	return
 }
