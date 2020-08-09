@@ -8,7 +8,8 @@ import (
 	"strings"
 )
 
-type IpCalc struct {
+// A IPCalc defines all the info for a network/IP
+type IPCalc struct {
 	Address        string `json:"address"`
 	Cidr           int    `json:"cidr"`
 	Netmask        string `json:"netmask"`
@@ -25,11 +26,11 @@ type ipCalcError struct {
 	Error string `json:"error"`
 }
 
-func NewIpCalc() *IpCalc {
-	return &IpCalc{}
+func newIPCalc() *IPCalc {
+	return &IPCalc{}
 }
 
-func (i *IpCalc) getNetworkInfo() error {
+func (i *IPCalc) getNetworkInfo() error {
 	_, ipNet, err := net.ParseCIDR(path.Join(i.Address, strconv.Itoa(i.Cidr)))
 	if err != nil {
 		return fmt.Errorf("something went wrong during cidr parsing: %v", err)

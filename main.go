@@ -16,29 +16,30 @@ import (
 
 const (
 	headerContentType string = "Content-Type"
-	headerAppJson     string = "application/json"
+	headerAppJSON     string = "application/json"
 )
 
+// A App defines the router
 type App struct {
 	Router *mux.Router
 }
 
-func NewApp() *App {
+func newApp() *App {
 	return &App{}
 }
 
-func (a *App) Initialize() {
+func (a *App) initialize() {
 	a.Router = mux.NewRouter().StrictSlash(false)
 	a.initializeRoutes()
 }
 
 func (a *App) initializeRoutes() {
-	a.Router.HandleFunc("/", getRemoteIp).Methods("GET")
-	a.Router.HandleFunc("/info", getHttpInfo).Methods("GET")
-	a.Router.HandleFunc("/ipcalc", getIpCalc).Methods("GET")
+	a.Router.HandleFunc("/", getRemoteIP).Methods("GET")
+	a.Router.HandleFunc("/info", getHTTPInfo).Methods("GET")
+	a.Router.HandleFunc("/ipcalc", getIPCalc).Methods("GET")
 }
 
-func (a *App) Run(port string) {
+func (a *App) run(port string) {
 	log.Fatal(http.ListenAndServe(":"+port, a.Router))
 }
 
@@ -54,20 +55,20 @@ func respondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
 		return
 	}
 
-	w.Header().Set(headerContentType, headerAppJson)
+	w.Header().Set(headerContentType, headerAppJSON)
 	w.WriteHeader(code)
 	w.Write(response)
 }
 
-// getRemoteIp will return the remote address of the client
-func getRemoteIp(w http.ResponseWriter, r *http.Request) {
+// getRemoteIP will return the remote address of the client
+func getRemoteIP(w http.ResponseWriter, r *http.Request) {
 	remoteAddr := strings.Split(r.RemoteAddr, ":")
 	io.WriteString(w, remoteAddr[0])
 	return
 }
 
-// getHttpInfo will return the request headers and the address of the host and the client
-func getHttpInfo(w http.ResponseWriter, r *http.Request) {
+// getHTTPInfo will return the request headers and the address of the host and the client
+func getHTTPInfo(w http.ResponseWriter, r *http.Request) {
 	var httpInfo = struct {
 		Header     http.Header `json:"header"`
 		Host       string      `json:"host"`
@@ -82,8 +83,8 @@ func getHttpInfo(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
-func getIpCalc(w http.ResponseWriter, r *http.Request) {
-	ipCalc := NewIpCalc()
+func getIPCalc(w http.ResponseWriter, r *http.Request) {
+	ipCalc := newIPCalc()
 
 	// populate r.Form
 	r.ParseForm()
@@ -129,14 +130,14 @@ func getIpCalc(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	a := NewApp()
-	a.Initialize()
+	a := newApp()
+	a.initialize()
 
 	// Get env var for http port
-	http_port := "8000"
+	httpPort := "8000"
 	if hp := os.Getenv("HTTP_PORT"); hp != "" {
-		http_port = hp
+		httpPort = hp
 	}
 
-	a.Run(http_port)
+	a.run(httpPort)
 }

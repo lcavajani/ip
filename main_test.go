@@ -15,7 +15,7 @@ var a *App
 
 // TestNewApp uses a different way to check the returned type using reflect
 func TestNewApp(t *testing.T) {
-	app := NewApp()
+	app := newApp()
 	actual := reflect.TypeOf(*app)
 	expected := reflect.TypeOf((*App)(nil)).Elem()
 	checkResultVSExpected(t, "returned struct is not from expected type", actual, expected)
@@ -61,7 +61,7 @@ func TestRespondWithJSON(t *testing.T) {
 	checkResultVSExpected(t, "wrong return code", rr.Code, http.StatusInternalServerError)
 }
 
-func TestGetRemoteIp(t *testing.T) {
+func TestGetRemoteIP(t *testing.T) {
 	var tests = []string{"10.0.0.1", "1.1.1.1", "192.168.0.1"}
 
 	for _, tt := range tests {
@@ -78,7 +78,7 @@ func TestGetRemoteIp(t *testing.T) {
 	}
 }
 
-func TestGetHttpInfo(t *testing.T) {
+func TestGetHTTPInfo(t *testing.T) {
 	type expected struct {
 		Header     http.Header `json:"header"`
 		Host       string      `json:"host"`
@@ -125,7 +125,7 @@ func TestGetHttpInfo(t *testing.T) {
 
 }
 
-func TestGetIpCalc(t *testing.T) {
+func TestGetIPCalc(t *testing.T) {
 	var tests = []struct {
 		ip      string
 		cidr    string
@@ -192,8 +192,8 @@ func checkResultVSExpected(t *testing.T, message string, result, expected interf
 }
 
 func TestMain(m *testing.M) {
-	a = NewApp()
-	a.Initialize()
+	a = newApp()
+	a.initialize()
 	code := m.Run()
 	os.Exit(code)
 }
