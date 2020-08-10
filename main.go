@@ -127,25 +127,15 @@ func getIPCalc(w http.ResponseWriter, r *http.Request) {
 
 	switch r.URL.Path {
 	case urlPathIPv4:
-		if IP.To4() == nil {
-			respondWithError(w, http.StatusBadRequest, fmt.Sprintf("invalid IPv4: %s", IP.String()))
-			return
-		}
-
-		if net.CIDRMask(cidr, IPv4Bits) == nil {
-			respondWithError(w, http.StatusBadRequest, fmt.Sprintf("invalid IPv4 cidr: %d", cidr))
+		if (IP.To4() == nil) || (net.CIDRMask(cidr, IPv4Bits) == nil) {
+			respondWithError(w, http.StatusBadRequest, fmt.Sprintf("invalid IPv4: %s/%d", IP.String(), cidr))
 			return
 		}
 
 		ipCalc = newIPv4Calc(IP.String(), cidr)
 	case urlPathIPv6:
-		if IP.To16() == nil {
-			respondWithError(w, http.StatusBadRequest, fmt.Sprintf("invalid IPv6: %s", IP.String()))
-			return
-		}
-
-		if net.CIDRMask(cidr, IPv6Bits) == nil {
-			respondWithError(w, http.StatusBadRequest, fmt.Sprintf("invalid IPv6 cidr: %d", cidr))
+		if (IP.To16() == nil) || (net.CIDRMask(cidr, IPv6Bits) == nil) {
+			respondWithError(w, http.StatusBadRequest, fmt.Sprintf("invalid IPv6: %s/%d", IP.String(), cidr))
 			return
 		}
 
