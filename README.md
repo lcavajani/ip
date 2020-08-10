@@ -39,15 +39,15 @@ curl -s 127.0.0.1:8000/info | jq '.'
 
 ## IPCalc
 
-The path `/ipcalc` takes two parameters:
+The path `/ip4calcc` takes two parameters:
 
 * `ip`
-* `cidr` (limited to `8` max)
+* `cidr`
 
 **Examples:**
 
 ```bash
-curl -s 127.0.0.1:8000/ipcalc?ip=192.168.0.100\&cidr=24 | jq '.'
+curl -s 127.0.0.1:8000/ip4calcc?ip=192.168.0.100\&cidr=24 | jq '.'
 {
   "address": "192.168.0.100",
   "cidr": "24",
@@ -62,7 +62,7 @@ curl -s 127.0.0.1:8000/ipcalc?ip=192.168.0.100\&cidr=24 | jq '.'
 ```
 
 ```bash
-curl -s 127.0.0.1:8000/ipcalc?ip=192.168.0.100\&cidr=30 | jq '.'
+curl -s 127.0.0.1:8000/ip4calcc?ip=192.168.0.100\&cidr=30 | jq '.'
 {
   "address": "192.168.0.100",
   "cidr": "30",
@@ -77,7 +77,7 @@ curl -s 127.0.0.1:8000/ipcalc?ip=192.168.0.100\&cidr=30 | jq '.'
 ```
 
 ```bash
-curl -s 127.0.0.1:8000/ipcalc?ip=192.168.0.100\&cidr=31 | jq '.'
+curl -s 127.0.0.1:8000/ip4calcc?ip=192.168.0.100\&cidr=31 | jq '.'
 {
   "address": "192.168.0.100",
   "cidr": "31",
@@ -92,7 +92,7 @@ curl -s 127.0.0.1:8000/ipcalc?ip=192.168.0.100\&cidr=31 | jq '.'
 ```
 
 ```bash
-curl -s 127.0.0.1:8000/ipcalc?ip=192.168.0.100\&cidr=32 | jq '.'
+curl -s 127.0.0.1:8000/ip4calcc?ip=192.168.0.100\&cidr=32 | jq '.'
 {
   "address": "192.168.0.100",
   "cidr": "32",
