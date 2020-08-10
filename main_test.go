@@ -129,7 +129,7 @@ func TestGetHTTPInfo(t *testing.T) {
 
 }
 
-func TestGetIPCalc(t *testing.T) {
+func TestGetIPv4Calc(t *testing.T) {
 	var tests = []struct {
 		ip      string
 		cidr    string

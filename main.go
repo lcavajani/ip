@@ -42,6 +42,7 @@ func (a *App) initializeRoutes() {
 	a.Router.HandleFunc(urlDefaultPath, getRemoteIP).Methods(http.MethodGet)
 	a.Router.HandleFunc(urlInfoPath, getHTTPInfo).Methods(http.MethodGet)
 	a.Router.HandleFunc(urlPathIPv4, getIPCalc).Methods(http.MethodGet)
+	a.Router.HandleFunc(urlPathIPv6, getIPCalc).Methods(http.MethodGet)
 }
 
 func (a *App) run(port string) {
@@ -139,7 +140,7 @@ func getIPCalc(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		ipCalc = newIPv4Calc(IP.String(), cidr)
+		ipCalc = newIPv6Calc(IP.String(), cidr)
 	}
 
 	err := calculate(ipCalc)

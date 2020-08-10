@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"math"
 	"net"
 	"path"
 	"strconv"
@@ -14,6 +15,15 @@ type Calculate interface {
 }
 
 type IPv6Calc struct {
+	Address        string `json:"address"`
+	Cidr           int    `json:"cidr"`
+	Netmask        string `json:"netmask"`
+	NetworkCidr    string `json:"networkCidr"`
+	Network        string `json:"network"`
+	HostsTotal     string `json:"hostsTotal"`
+	HostsAvailable string `json:"hostsAvailable"`
+	//HostMin        string `json:"hostMin"`
+	//HostMax        string `json:"hostMax"`
 }
 
 // A IPv4Calc defines all the info for a network/IP
@@ -42,7 +52,23 @@ func newIPv4Calc(ip string, cidr int) *IPv4Calc {
 	return &IPv4Calc{Address: ip, Cidr: cidr}
 }
 
+func newIPv6Calc(ip string, cidr int) *IPv6Calc {
+	return &IPv6Calc{Address: ip, Cidr: cidr}
+}
+
 func (i *IPv6Calc) getNetworkInfo() error {
+	_, ipNet, err := net.ParseCIDR(path.Join(i.Address, strconv.Itoa(i.Cidr)))
+	if err != nil {
+		return fmt.Errorf("something went wrong during cidr parsing: %v", err)
+	}
+
+	i.Netmask = net.IP(ipNet.Mask).String()
+	totalFl := math.Pow(2, float64(128-i.Cidr))
+	i.HostsTotal = fmt.Sprintf("%.0f", totalFl)
+	i.HostsAvailable = i.HostsTotal
+	i.NetworkCidr = ipNet.String()
+	i.Network = strings.Split(i.NetworkCidr, "/")[0]
+
 	return nil
 }
 
@@ -65,12 +91,12 @@ func (i *IPv4Calc) getNetworkInfo() error {
 		i.HostsAvailable = 1
 	case 31:
 		i.HostMin = i.Network
-		i.HostMax = nextIP(ipNet.IP, uint(i.HostsTotal-1))
+		i.HostMax = nextIPv4(ipNet.IP, uint(i.HostsTotal-1))
 		i.HostsAvailable = 2
 	default:
-		i.HostMin = nextIP(ipNet.IP, uint(1))
-		i.HostMax = nextIP(ipNet.IP, uint(i.HostsTotal-2))
-		i.Broadcast = nextIP(ipNet.IP, uint(i.HostsTotal-1))
+		i.HostMin = nextIPv4(ipNet.IP, uint(1))
+		i.HostMax = nextIPv4(ipNet.IP, uint(i.HostsTotal-2))
+		i.Broadcast = nextIPv4(ipNet.IP, uint(i.HostsTotal-1))
 		i.HostsAvailable = i.HostsTotal - 2
 	}
 
@@ -78,7 +104,7 @@ func (i *IPv4Calc) getNetworkInfo() error {
 }
 
 // nextIP will get the next ip from an IP address
-func nextIP(ip net.IP, inc uint) string {
+func nextIPv4(ip net.IP, inc uint) string {
 	i := ip.To4()
 	v := uint(i[0])<<24 + uint(i[1])<<16 + uint(i[2])<<8 + uint(i[3])
 	v += inc

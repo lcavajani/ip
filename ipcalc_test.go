@@ -67,7 +67,7 @@ func TestNewIPv4Calc(t *testing.T) {
 	}
 }
 
-func TestNextIP(t *testing.T) {
+func TestNextIPv4(t *testing.T) {
 	var tests = []struct {
 		ip, nextIP string
 		inc        uint
@@ -79,7 +79,7 @@ func TestNextIP(t *testing.T) {
 
 	for _, tt := range tests {
 		ip := net.ParseIP(tt.ip)
-		result := nextIP(ip, tt.inc)
+		result := nextIPv4(ip, tt.inc)
 		if result != tt.nextIP {
 			t.Errorf("wanted %s, got %s", tt.nextIP, result)
 		}
