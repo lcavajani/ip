@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"os"
 	"strconv"
-	"strings"
 
 	"github.com/gorilla/mux"
 )
@@ -34,9 +33,9 @@ func (a *App) initialize() {
 }
 
 func (a *App) initializeRoutes() {
-	a.Router.HandleFunc("/", getRemoteIP).Methods("GET")
-	a.Router.HandleFunc("/info", getHTTPInfo).Methods("GET")
-	a.Router.HandleFunc("/ipcalc", getIPCalc).Methods("GET")
+	a.Router.HandleFunc("/", getRemoteIP).Methods(http.MethodGet)
+	a.Router.HandleFunc("/info", getHTTPInfo).Methods(http.MethodGet)
+	a.Router.HandleFunc("/ipcalc", getIPCalc).Methods(http.MethodGet)
 }
 
 func (a *App) run(port string) {
@@ -62,8 +61,8 @@ func respondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
 
 // getRemoteIP will return the remote address of the client
 func getRemoteIP(w http.ResponseWriter, r *http.Request) {
-	remoteAddr := strings.Split(r.RemoteAddr, ":")
-	io.WriteString(w, remoteAddr[0])
+	remoteAddr, _, _ := net.SplitHostPort(r.RemoteAddr)
+	io.WriteString(w, remoteAddr)
 	return
 }
 
