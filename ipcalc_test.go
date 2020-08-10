@@ -7,25 +7,25 @@ import (
 
 func TestGetNetworkInfo(t *testing.T) {
 	var validTests = []struct {
-		actual, expected IPCalc
+		actual, expected IPv4Calc
 	}{
 		{
-			IPCalc{Address: "192.168.0.100", Cidr: 24},
-			IPCalc{Address: "192.168.0.100", Cidr: 24, Netmask: "255.255.255.0",
+			IPv4Calc{Address: "192.168.0.100", Cidr: 24},
+			IPv4Calc{Address: "192.168.0.100", Cidr: 24, Netmask: "255.255.255.0",
 				NetworkCidr: "192.168.0.0/24", Network: "192.168.0.0",
 				HostMin: "192.168.0.1", HostMax: "192.168.0.254", Broadcast: "192.168.0.255",
 				HostsAvailable: 254, HostsTotal: 256},
 		},
 		{
-			IPCalc{Address: "192.168.0.100", Cidr: 31},
-			IPCalc{Address: "192.168.0.100", Cidr: 31, Netmask: "255.255.255.254",
+			IPv4Calc{Address: "192.168.0.100", Cidr: 31},
+			IPv4Calc{Address: "192.168.0.100", Cidr: 31, Netmask: "255.255.255.254",
 				NetworkCidr: "192.168.0.100/31", Network: "192.168.0.100",
 				HostMin: "192.168.0.100", HostMax: "192.168.0.101", Broadcast: "",
 				HostsAvailable: 2, HostsTotal: 2},
 		},
 		{
-			IPCalc{Address: "192.168.0.100", Cidr: 32},
-			IPCalc{Address: "192.168.0.100", Cidr: 32, Netmask: "255.255.255.255",
+			IPv4Calc{Address: "192.168.0.100", Cidr: 32},
+			IPv4Calc{Address: "192.168.0.100", Cidr: 32, Netmask: "255.255.255.255",
 				NetworkCidr: "192.168.0.100/32", Network: "192.168.0.100",
 				HostMin: "192.168.0.100", HostMax: "192.168.0.100", Broadcast: "",
 				HostsAvailable: 1, HostsTotal: 1},
@@ -40,11 +40,11 @@ func TestGetNetworkInfo(t *testing.T) {
 	}
 
 	var invalidTests = []struct {
-		ipCalc IPCalc
+		ipCalc IPv4Calc
 	}{
-		{IPCalc{Address: "192.168.0.100", Cidr: 44}},
-		{IPCalc{Address: "192.168.0.1000", Cidr: 32}},
-		{IPCalc{Address: "192.168.0.1000", Cidr: 44}},
+		{IPv4Calc{Address: "192.168.0.100", Cidr: 44}},
+		{IPv4Calc{Address: "192.168.0.1000", Cidr: 32}},
+		{IPv4Calc{Address: "192.168.0.1000", Cidr: 44}},
 	}
 
 	for _, tt := range invalidTests {
@@ -55,15 +55,15 @@ func TestGetNetworkInfo(t *testing.T) {
 	}
 }
 
-func TestNewIPCalc(t *testing.T) {
+func TestNewIPv4Calc(t *testing.T) {
 	var ipCalc interface{}
 
-	ipCalc = newIPCalc()
+	ipCalc = newIPv4Calc("192.168.0.100", 24)
 	switch ipCalc.(type) {
-	case *IPCalc:
+	case *IPv4Calc:
 		return
 	default:
-		t.Errorf("returned struct is not from expected type %T, got %T", IPCalc{}, ipCalc)
+		t.Errorf("returned struct is not from expected type %T, got %T", IPv4Calc{}, ipCalc)
 	}
 }
 

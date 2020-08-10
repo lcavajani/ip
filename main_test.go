@@ -2,11 +2,14 @@ package main
 
 import (
 	"encoding/json"
+	"math/rand"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"os"
 	"reflect"
+	"strconv"
 	"strings"
 	"testing"
 )
@@ -70,8 +73,9 @@ func TestGetRemoteIP(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		// Set remote address in request
-		req.RemoteAddr = tt
+		// Set remote address in request IP:PORT
+		port := strconv.Itoa(rand.Intn(65535))
+		req.RemoteAddr = net.JoinHostPort(tt, port)
 		rr := executeRequest(req)
 
 		checkResultVSExpected(t, "handler returned wrong remote IP", rr.Body.String(), tt)
@@ -137,17 +141,19 @@ func TestGetIPCalc(t *testing.T) {
 		{"192.168.0.1", "32", http.StatusOK},
 		{"", "", http.StatusBadRequest},
 		{"", "24", http.StatusBadRequest},
-		//		{"192.168.0.1", "", http.StatusBadRequest},
 		{"192.168.0.1", "", http.StatusBadRequest},
 		{"192.168.0.1111", "24", http.StatusBadRequest},
 		{"192.168.0.1", "24444", http.StatusBadRequest},
+		{"192.168.0.1", "-----", http.StatusBadRequest},
+		{"e80::", "10", http.StatusBadRequest},
+		{"192.168.0.1", "128", http.StatusBadRequest},
 	}
 
 	for _, tt := range tests {
 		form := url.Values{}
 		form.Add("ip", tt.ip)
 		form.Add("cidr", tt.cidr)
-		req, err := http.NewRequest("GET", "/ipcalc", strings.NewReader(form.Encode()))
+		req, err := http.NewRequest("GET", "/ip4calc", strings.NewReader(form.Encode()))
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -167,7 +173,7 @@ func TestGetIPCalc(t *testing.T) {
 			form.Add(k, v)
 		}
 
-		req, err := http.NewRequest("GET", "/ipcalc", strings.NewReader(form.Encode()))
+		req, err := http.NewRequest("GET", "/ip4calc", strings.NewReader(form.Encode()))
 		if err != nil {
 			t.Fatal(err)
 		}

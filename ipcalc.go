@@ -8,29 +8,45 @@ import (
 	"strings"
 )
 
-// A IPCalc defines all the info for a network/IP
-type IPCalc struct {
+// A Calculate interface is used for IPv4 and IPv6
+type Calculate interface {
+	getNetworkInfo() error
+}
+
+type IPv6Calc struct {
+}
+
+// A IPv4Calc defines all the info for a network/IP
+type IPv4Calc struct {
 	Address        string `json:"address"`
+	Broadcast      string `json:"broadcast,omitempty"`
 	Cidr           int    `json:"cidr"`
 	Netmask        string `json:"netmask"`
 	NetworkCidr    string `json:"networkCidr"`
 	Network        string `json:"network"`
 	HostMin        string `json:"hostMin"`
 	HostMax        string `json:"hostMax"`
-	Broadcast      string `json:"broadcast,omitempty"`
 	HostsAvailable int    `json:"hostsAvailable"`
 	HostsTotal     int    `json:"hostsTotal"`
 }
 
-type ipCalcError struct {
+type errorJSON struct {
 	Error string `json:"error"`
 }
 
-func newIPCalc() *IPCalc {
-	return &IPCalc{}
+func calculate(calc Calculate) error {
+	return calc.getNetworkInfo()
 }
 
-func (i *IPCalc) getNetworkInfo() error {
+func newIPv4Calc(ip string, cidr int) *IPv4Calc {
+	return &IPv4Calc{Address: ip, Cidr: cidr}
+}
+
+func (i *IPv6Calc) getNetworkInfo() error {
+	return nil
+}
+
+func (i *IPv4Calc) getNetworkInfo() error {
 	_, ipNet, err := net.ParseCIDR(path.Join(i.Address, strconv.Itoa(i.Cidr)))
 	if err != nil {
 		return fmt.Errorf("something went wrong during cidr parsing: %v", err)

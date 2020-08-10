@@ -16,6 +16,12 @@ import (
 const (
 	headerContentType string = "Content-Type"
 	headerAppJSON     string = "application/json"
+	IPv4Bits          int    = 32
+	IPv6Bits          int    = 128
+	urlDefaultPath    string = "/"
+	urlInfoPath       string = "/info"
+	urlPathIPv4       string = "/ip4calc"
+	urlPathIPv6       string = "/ip6calc"
 )
 
 // A App defines the router
@@ -33,9 +39,9 @@ func (a *App) initialize() {
 }
 
 func (a *App) initializeRoutes() {
-	a.Router.HandleFunc("/", getRemoteIP).Methods(http.MethodGet)
-	a.Router.HandleFunc("/info", getHTTPInfo).Methods(http.MethodGet)
-	a.Router.HandleFunc("/ipcalc", getIPCalc).Methods(http.MethodGet)
+	a.Router.HandleFunc(urlDefaultPath, getRemoteIP).Methods(http.MethodGet)
+	a.Router.HandleFunc(urlInfoPath, getHTTPInfo).Methods(http.MethodGet)
+	a.Router.HandleFunc(urlPathIPv4, getIPCalc).Methods(http.MethodGet)
 }
 
 func (a *App) run(port string) {
@@ -43,14 +49,14 @@ func (a *App) run(port string) {
 }
 
 func respondWithError(w http.ResponseWriter, code int, message string) {
-	respondWithJSON(w, code, ipCalcError{Error: message})
+	respondWithJSON(w, code, errorJSON{Error: message})
 }
 
 func respondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
 	response, err := json.Marshal(payload)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(ipCalcError{Error: err.Error()})
+		json.NewEncoder(w).Encode(errorJSON{Error: err.Error()})
 		return
 	}
 
@@ -83,7 +89,9 @@ func getHTTPInfo(w http.ResponseWriter, r *http.Request) {
 }
 
 func getIPCalc(w http.ResponseWriter, r *http.Request) {
-	ipCalc := newIPCalc()
+	var ipCalc Calculate
+	var IP net.IP
+	var cidr int
 
 	// populate r.Form
 	r.ParseForm()
@@ -91,7 +99,6 @@ func getIPCalc(w http.ResponseWriter, r *http.Request) {
 	// ip and cidr must be provided
 	if len(r.Form) != 2 {
 		respondWithError(w, http.StatusBadRequest, fmt.Sprintf("wrong number of arguments: %v", len(r.Form)))
-		return
 	}
 
 	// Get query parameters
@@ -100,26 +107,52 @@ func getIPCalc(w http.ResponseWriter, r *http.Request) {
 		switch k {
 		case "ip":
 			// ParseIP returns nil if the IP is wrong
-			if ip := net.ParseIP(val); ip == nil {
-				respondWithError(w, http.StatusBadRequest, fmt.Sprintf("invalid ip: %v", val))
+			IP = net.ParseIP(val)
+			if IP == nil {
+				respondWithError(w, http.StatusBadRequest, fmt.Sprintf("invalid ip: %s", val))
 				return
 			}
-			ipCalc.Address = val
 		case "cidr":
-			valInt, _ := strconv.Atoi(val)
-			// make sure val is set to avoid defaulting on /0 from default struct val
-			if (net.CIDRMask(valInt, 32) == nil) || (val == "") {
-				respondWithError(w, http.StatusBadRequest, fmt.Sprintf("invalid cidr: %d", valInt))
+			var err error
+			cidr, err = strconv.Atoi(val)
+			if (err != nil) || (cidr > IPv6Bits) {
+				respondWithError(w, http.StatusBadRequest, fmt.Sprintf("invalid cidr: %s", val))
 				return
 			}
-			ipCalc.Cidr = valInt
 		default:
 			respondWithError(w, http.StatusBadRequest, fmt.Sprintf("wrong argument provided: %v", k))
 			return
 		}
 	}
 
-	err := ipCalc.getNetworkInfo()
+	switch r.URL.Path {
+	case urlPathIPv4:
+		if IP.To4() == nil {
+			respondWithError(w, http.StatusBadRequest, fmt.Sprintf("invalid IPv4: %s", IP.String()))
+			return
+		}
+
+		if net.CIDRMask(cidr, IPv4Bits) == nil {
+			respondWithError(w, http.StatusBadRequest, fmt.Sprintf("invalid IPv4 cidr: %d", cidr))
+			return
+		}
+
+		ipCalc = newIPv4Calc(IP.String(), cidr)
+	case urlPathIPv6:
+		if IP.To16() == nil {
+			respondWithError(w, http.StatusBadRequest, fmt.Sprintf("invalid IPv6: %s", IP.String()))
+			return
+		}
+
+		if net.CIDRMask(cidr, IPv6Bits) == nil {
+			respondWithError(w, http.StatusBadRequest, fmt.Sprintf("invalid IPv6 cidr: %d", cidr))
+			return
+		}
+
+		ipCalc = newIPv4Calc(IP.String(), cidr)
+	}
+
+	err := calculate(ipCalc)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, err.Error())
 		return
